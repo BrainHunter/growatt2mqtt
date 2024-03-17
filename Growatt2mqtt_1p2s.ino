@@ -149,10 +149,10 @@ void timerCallback() {
   // Send RSSI and uptime status
   if (seconds % UPDATE_STATUS == 0) {
     // Send MQTT update
-    if (mqtt_server != "") {
+    if (strlen(mqtt_server) != 0) {
       char topic[80];
       char value[300];
-      sprintf(value, "{\"rssi\": %d, \"uptime\": %d, \"ssid\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"clientid\":\"%s\", \"version\":\"%s\"}", WiFi.RSSI(), uptime, WiFi.SSID().c_str(), WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3], newclientid, buildversion);
+      sprintf(value, "{\"rssi\": %d, \"uptime\": %lu, \"ssid\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"clientid\":\"%s\", \"version\":\"%s\"}", WiFi.RSSI(), uptime, WiFi.SSID().c_str(), WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3], newclientid, buildversion);
       sprintf(topic, "%s/%s", topicRoot, "status");
       mqtt.publish(topic, value);
       Serial.println(F("MQTT status sent"));
@@ -251,7 +251,7 @@ void setup() {
   Serial.println(F("HTTP server started"));
 
   // Set up the MQTT server connection
-  if (mqtt_server != "") {
+  if (strlen(mqtt_server) != 0) {
     mqtt.setServer(mqtt_server, 1883);
     mqtt.setBufferSize(1024);
     mqtt.setCallback(callback);
@@ -298,9 +298,9 @@ void setup() {
 void callback(char* topic, byte* payload, unsigned int length) {
   // Convert the incoming byte array to a string
 
-  int i = 0;
+ 
   uint8_t result;
-  for (i = 0; i < length; i++) {        // each char to upper
+  for (unsigned int i = 0; i < length; i++) {        // each char to upper
     payload[i] = toupper(payload[i]);
   }
   payload[length] = '\0';               // Null terminator used to terminate the char array
@@ -403,7 +403,7 @@ void loop() {
   ArduinoOTA.handle();
 
   // Handle MQTT connection/reconnection
-  if (mqtt_server != "") {
+  if (strlen(mqtt_server) != 0) {
     if (!mqtt.connected()) {
       reconnect();
     }
