@@ -13,8 +13,18 @@
 // - RS485 to TTL converter: https://www.aliexpress.com/item/1005001621798947.html
 // - To power from mains: Hi-Link 5V power supply (https://www.aliexpress.com/item/1005001484531375.html), fuseholder and 1A fuse, and varistor
 
-#include <ESP8266WiFi.h>          // Wifi connection
-#include <ESP8266WebServer.h>     // Web server for general HTTP response
+#if defined(ESP8266)
+    #define HARDWARE "ESP8266"
+    #include <ESP8266WiFi.h>          // Wifi connection
+    #include <ESP8266WebServer.h>     // Web server for general HTTP response
+#elif defined(ESP32)
+    #define HARDWARE "ESP32"
+    #include "WiFi.h"
+    #include <WebServer.h>
+#endif
+
+
+
 #include <PubSubClient.h>         // MQTT support
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
@@ -23,13 +33,19 @@
 #include "settings.h"
 #include "growattInterface.h"
 
-os_timer_t myTimer;
+//os_timer_t myTimer;
+#if defined(ESP8266)
 ESP8266WebServer server(80);
+#elif defined(ESP32)
+WebServer server(80);
+#endif
 WiFiClient espClient;
 PubSubClient mqtt(mqtt_server, 1883, 0, espClient);
 
 CRGB leds[NUM_LEDS];
 growattIF growattInterface(MAX485_RE_NEG, MAX485_DE, MAX485_RX, MAX485_TX);
+
+uint32_t timediff(uint32_t t1, uint32_t t2);
 
 void ReadInputRegisters() {
   char json[1024];
@@ -115,7 +131,7 @@ void ReadHoldingRegisters() {
 }
 
 // This is the 1 second timer callback function
-void timerCallback(void *pArg) {
+void timerCallback() {
   seconds++;
 
   // Query the modbus device
@@ -225,8 +241,8 @@ void setup() {
   Serial.println("Modbus connection is set up");
 
   // Create the 1 second timer interrupt
-  os_timer_setfn(&myTimer, timerCallback, NULL);
-  os_timer_arm(&myTimer, 1000, true);
+  //os_timer_setfn(&myTimer, timerCallback, NULL);
+  //os_timer_arm(&myTimer, 1000, true);
 
   server.on("/", []() {                       // Dummy page
     server.send(200, "text/plain", "Growatt Solar Inverter to MQTT Gateway");
@@ -255,12 +271,12 @@ void setup() {
   // ArduinoOTA.setPassword((const char *)"123");
 
   ArduinoOTA.onStart([]() {
-    os_timer_disarm(&myTimer);
+    //os_timer_disarm(&myTimer);
     Serial.println("Start");
   });
   ArduinoOTA.onEnd([]() {
     Serial.println("\nEnd");
-    os_timer_arm(&myTimer, 1000, true);
+    //os_timer_arm(&myTimer, 1000, true);
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
@@ -414,4 +430,22 @@ void loop() {
     leds[0] = CRGB::Black;
     FastLED.show();
   }
+
+  // generate 1sec timer:
+  static unsigned long timemarker = 0;
+  if(timediff(millis(),timemarker ) > 1000  )
+  {
+    timemarker = millis();
+    timerCallback();
+
+  }
 }
+
+
+uint32_t timediff(uint32_t t1, uint32_t t2)
+{
+    int32_t d = (int32_t)t1 - (int32_t)t2;
+	if(d < 0) d = -d;
+    return (uint32_t) d;
+}
+

@@ -14,8 +14,15 @@ growattIF::growattIF(int _PinMAX485_RE_NEG, int _PinMAX485_DE, int _PinMAX485_RX
 }
 
 void growattIF::initGrowatt() {
-  serial = new SoftwareSerial (PinMAX485_RX, PinMAX485_TX, false); //RX, TX
-  serial->begin(MODBUS_RATE);
+  #if defined(ESP8266)
+    serial = new SoftwareSerial (PinMAX485_RX, PinMAX485_TX, false); //RX, TX
+    serial->begin(MODBUS_RATE);
+  #elif defined(ESP32)
+    serial = &Serial2;
+    serial->begin(MODBUS_RATE, SERIAL_8N1 , PinMAX485_RX ,PinMAX485_TX ); // RX , TX
+  #endif
+  
+  
   growattInterface.begin(SLAVE_ID , *serial);
 
   static growattIF* obj = this;                               //pointer to the object
@@ -50,11 +57,13 @@ void growattIF::postTransmission() {
 
 uint8_t growattIF::ReadInputRegisters(char* json) {
   uint8_t result;
-
-  ESP.wdtDisable();
+#if defined(ESP8266)
+  ESP.wdtDisable();     // diabling the watchdog is not nice. 
   result = growattInterface.readInputRegisters(setcounter * 64, 64);
   ESP.wdtEnable(1);
-
+#else
+  result = growattInterface.readInputRegisters(setcounter * 64, 64);
+#endif
   if (result == growattInterface.ku8MBSuccess)   {
     if (setcounter == 0) {    //register 0-63
       // Status and PV data
@@ -220,9 +229,14 @@ uint8_t growattIF::ReadInputRegisters(char* json) {
 
 uint8_t growattIF::ReadHoldingRegisters(char* json) {
   uint8_t result;
-  ESP.wdtDisable();
+
+#if defined(ESP8266)
+  ESP.wdtDisable();     // diabling the watchdog is not nice. 
   result = growattInterface.readHoldingRegisters(setcounter * 64, 64);
   ESP.wdtEnable(1);
+#else
+  result = growattInterface.readHoldingRegisters(setcounter * 64, 64);
+#endif
 
   if (result == growattInterface.ku8MBSuccess)   {
     if (setcounter == 0) {      //register 0-63

@@ -3,8 +3,11 @@
 
 #include "Arduino.h"
 #include <ModbusMaster.h>         // Modbus master library for ESP8266
-#include <SoftwareSerial.h>       // Leave the main serial line (USB) for debugging and flashing
-
+#if defined(ESP8266)
+  #include <SoftwareSerial.h>       // Leave the main serial line (USB) for debugging and flashing
+#elif defined(ESP32)
+  // nothing here yet
+#endif
 
 class growattIF {
 #define SLAVE_ID        1         // Default slave ID of Growatt
@@ -12,7 +15,11 @@ class growattIF {
 
   private:
     ModbusMaster growattInterface;
+  #if defined(ESP8266)
     SoftwareSerial *serial;
+  #elif defined(ESP32)
+    HardwareSerial  *serial;
+  #endif
     void preTransmission();
     void postTransmission();
     int PinMAX485_RE_NEG;
