@@ -191,39 +191,39 @@ uint8_t growattIF::ReadInputRegisters(char* json) {
     return result;
   }
   // Generate the modbus MQTT message
-  sprintf(json, "{", json);
-  sprintf(json, "%s \"status\":%d,", json, modbusdata.status);
-  sprintf(json, "%s \"solarpower\":%.1f,", json, modbusdata.solarpower);
-  sprintf(json, "%s \"pv1voltage\":%.1f,", json, modbusdata.pv1voltage);
-  sprintf(json, "%s \"pv1current\":%.1f,", json, modbusdata.pv1current);
-  sprintf(json, "%s \"pv1power\":%.1f,", json, modbusdata.pv1power);
-  sprintf(json, "%s \"pv2voltage\":%.1f,", json, modbusdata.pv2voltage);
-  sprintf(json, "%s \"pv2current\":%.1f,", json, modbusdata.pv2current);
-  sprintf(json, "%s \"pv2power\":%.1f,", json, modbusdata.pv2power);
+  sprintf(json, "{");
+  sprintf(json + strlen(json), " \"status\":%d,",  modbusdata.status);
+  sprintf(json + strlen(json), " \"solarpower\":%.1f,", modbusdata.solarpower);
+  sprintf(json + strlen(json), " \"pv1voltage\":%.1f,", modbusdata.pv1voltage);
+  sprintf(json + strlen(json), " \"pv1current\":%.1f,", modbusdata.pv1current);
+  sprintf(json + strlen(json), " \"pv1power\":%.1f,", modbusdata.pv1power);
+  sprintf(json + strlen(json), " \"pv2voltage\":%.1f,", modbusdata.pv2voltage);
+  sprintf(json + strlen(json), " \"pv2current\":%.1f,", modbusdata.pv2current);
+  sprintf(json + strlen(json), " \"pv2power\":%.1f,", modbusdata.pv2power);
 
-  sprintf(json, "%s \"outputpower\":%.1f,", json, modbusdata.outputpower);
-  sprintf(json, "%s \"gridfrequency\":%.2f,", json, modbusdata.gridfrequency);
-  sprintf(json, "%s \"gridvoltage\":%.1f,", json, modbusdata.gridvoltage);
+  sprintf(json + strlen(json), " \"outputpower\":%.1f,", modbusdata.outputpower);
+  sprintf(json + strlen(json), " \"gridfrequency\":%.2f,", modbusdata.gridfrequency);
+  sprintf(json + strlen(json), " \"gridvoltage\":%.1f,", modbusdata.gridvoltage);
 
-  sprintf(json, "%s \"energytoday\":%.1f,", json, modbusdata.energytoday);
-  sprintf(json, "%s \"energytotal\":%.1f,", json, modbusdata.energytotal);
-  sprintf(json, "%s \"totalworktime\":%.1f,", json, modbusdata.totalworktime);
-  sprintf(json, "%s \"pv1energytoday\":%.1f,", json, modbusdata.pv1energytoday);
-  sprintf(json, "%s \"pv1energytotal\":%.1f,", json, modbusdata.pv1energytotal);
-  sprintf(json, "%s \"pv2energytoday\":%.1f,", json, modbusdata.pv2energytoday);
-  sprintf(json, "%s \"pv2energytotal\":%.1f,", json, modbusdata.pv2energytotal);
-  sprintf(json, "%s \"opfullpower\":%.1f,", json, modbusdata.opfullpower);
+  sprintf(json + strlen(json), " \"energytoday\":%.1f,", modbusdata.energytoday);
+  sprintf(json + strlen(json), " \"energytotal\":%.1f,",  modbusdata.energytotal);
+  sprintf(json + strlen(json), " \"totalworktime\":%.1f,",  modbusdata.totalworktime);
+  sprintf(json + strlen(json), " \"pv1energytoday\":%.1f,",  modbusdata.pv1energytoday);
+  sprintf(json + strlen(json), " \"pv1energytotal\":%.1f,",  modbusdata.pv1energytotal);
+  sprintf(json + strlen(json), " \"pv2energytoday\":%.1f,",  modbusdata.pv2energytoday);
+  sprintf(json + strlen(json), " \"pv2energytotal\":%.1f,",  modbusdata.pv2energytotal);
+  sprintf(json + strlen(json), " \"opfullpower\":%.1f,",  modbusdata.opfullpower);
 
-  sprintf(json, "%s \"tempinverter\":%.1f,", json, modbusdata.tempinverter);
-  sprintf(json, "%s \"tempipm\":%.1f,", json, modbusdata.tempipm);
-  sprintf(json, "%s \"tempboost\":%.1f,", json, modbusdata.tempboost);
+  sprintf(json + strlen(json), " \"tempinverter\":%.1f,", modbusdata.tempinverter);
+  sprintf(json + strlen(json), " \"tempipm\":%.1f,", modbusdata.tempipm);
+  sprintf(json + strlen(json), " \"tempboost\":%.1f,", modbusdata.tempboost);
 
-  sprintf(json, "%s \"ipf\":%d,", json, modbusdata.ipf);
-  sprintf(json, "%s \"realoppercent\":%d,", json, modbusdata.realoppercent);
-  sprintf(json, "%s \"deratingmode\":%d,", json, modbusdata.deratingmode);
-  sprintf(json, "%s \"faultcode\":%d,", json, modbusdata.faultcode);
-  sprintf(json, "%s \"faultbitcode\":%d,", json, modbusdata.faultbitcode);
-  sprintf(json, "%s \"warningbitcode\":%d }", json, modbusdata.warningbitcode);
+  sprintf(json + strlen(json), " \"ipf\":%d,", modbusdata.ipf);
+  sprintf(json + strlen(json), " \"realoppercent\":%d,", modbusdata.realoppercent);
+  sprintf(json + strlen(json), " \"deratingmode\":%d,", modbusdata.deratingmode);
+  sprintf(json + strlen(json), " \"faultcode\":%d,", modbusdata.faultcode);
+  sprintf(json + strlen(json), " \"faultbitcode\":%d,", modbusdata.faultbitcode);
+  sprintf(json + strlen(json), " \"warningbitcode\":%d }", modbusdata.warningbitcode);
   return result;
 }
 
@@ -312,28 +312,28 @@ uint8_t growattIF::ReadHoldingRegisters(char* json) {
     return result;
   }
   // Generate the modbus MQTT message
-  sprintf(json, "{", json);
-  sprintf(json, "%s \"enable\":%d,", json, modbussettings.enable);
-  sprintf(json, "%s \"safetyfuncen\":%d,", json, modbussettings.safetyfuncen);
-  sprintf(json, "%s \"maxoutputactivepp\":%d,", json, modbussettings.maxoutputactivepp);
-  sprintf(json, "%s \"maxoutputreactivepp\":%d,", json, modbussettings.maxoutputreactivepp);
+  sprintf(json, "{");
+  sprintf(json + strlen(json), " \"enable\":%d,", modbussettings.enable);
+  sprintf(json + strlen(json), " \"safetyfuncen\":%d,", modbussettings.safetyfuncen);
+  sprintf(json + strlen(json), " \"maxoutputactivepp\":%d,", modbussettings.maxoutputactivepp);
+  sprintf(json + strlen(json), " \"maxoutputreactivepp\":%d,", modbussettings.maxoutputreactivepp);
 
-  sprintf(json, "%s \"maxpower\":%.1f,", json, modbussettings.maxpower);
-  sprintf(json, "%s \"voltnormal\":%.1f,", json, modbussettings.voltnormal);
-  sprintf(json, "%s \"startvoltage\":%.1f,", json, modbussettings.startvoltage);
-  sprintf(json, "%s \"gridvoltlowlimit\":%.1f,", json, modbussettings.gridvoltlowlimit);
-  sprintf(json, "%s \"gridvolthighlimit\":%.1f,", json, modbussettings.gridvolthighlimit);
-  sprintf(json, "%s \"gridfreqlowlimit\":%.1f,", json, modbussettings.gridfreqlowlimit);
-  sprintf(json, "%s \"gridfreqhighlimit\":%.1f,", json, modbussettings.gridfreqhighlimit);
-  sprintf(json, "%s \"gridvoltlowconnlimit\":%.1f,", json, modbussettings.gridvoltlowconnlimit);
-  sprintf(json, "%s \"gridvolthighconnlimit\":%.1f,", json, modbussettings.gridvolthighconnlimit);
-  sprintf(json, "%s \"gridfreqlowconnlimit\":%.1f,", json, modbussettings.gridfreqlowconnlimit);
-  sprintf(json, "%s \"gridfreqhighconnlimit\":%.1f,", json, modbussettings.gridfreqhighconnlimit);
+  sprintf(json + strlen(json), " \"maxpower\":%.1f,", modbussettings.maxpower);
+  sprintf(json + strlen(json), " \"voltnormal\":%.1f,", modbussettings.voltnormal);
+  sprintf(json + strlen(json), " \"startvoltage\":%.1f,", modbussettings.startvoltage);
+  sprintf(json + strlen(json), " \"gridvoltlowlimit\":%.1f,", modbussettings.gridvoltlowlimit);
+  sprintf(json + strlen(json), " \"gridvolthighlimit\":%.1f,", modbussettings.gridvolthighlimit);
+  sprintf(json + strlen(json), " \"gridfreqlowlimit\":%.1f,", modbussettings.gridfreqlowlimit);
+  sprintf(json + strlen(json), " \"gridfreqhighlimit\":%.1f,", modbussettings.gridfreqhighlimit);
+  sprintf(json + strlen(json), " \"gridvoltlowconnlimit\":%.1f,", modbussettings.gridvoltlowconnlimit);
+  sprintf(json + strlen(json), " \"gridvolthighconnlimit\":%.1f,", modbussettings.gridvolthighconnlimit);
+  sprintf(json + strlen(json), " \"gridfreqlowconnlimit\":%.1f,", modbussettings.gridfreqlowconnlimit);
+  sprintf(json + strlen(json), " \"gridfreqhighconnlimit\":%.1f,", modbussettings.gridfreqhighconnlimit);
 
-  sprintf(json, "%s \"firmware\":\"%s\",", json, modbussettings.firmware);
-  sprintf(json, "%s \"controlfirmware\":\"%s\",", json, modbussettings.controlfirmware);
-  sprintf(json, "%s \"serial\":\"%s\",", json, modbussettings.serial);
-  sprintf(json, "%s \"modulPower\":\"%04X\" }", json, modbussettings.modul);
+  sprintf(json + strlen(json), " \"firmware\":\"%s\",", modbussettings.firmware);
+  sprintf(json + strlen(json), " \"controlfirmware\":\"%s\",", modbussettings.controlfirmware);
+  sprintf(json + strlen(json), " \"serial\":\"%s\",", modbussettings.serial);
+  sprintf(json + strlen(json), " \"modulPower\":\"%04X\" }", modbussettings.modul);
   return result;
 }
 
