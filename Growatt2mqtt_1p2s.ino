@@ -381,46 +381,10 @@ void setup() {
   uptime = 0;
   seconds = 0;
 
-  // Connect to Wifi  // this is now handled by IOT WebConf
-  // Serial.print(F("Connecting to Wifi"));
-  // WiFi.mode(WIFI_STA);
-
-// #ifdef FIXEDIP
-//   // Configures static IP address
-//   if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-//     Serial.println("STA Failed to configure");
-//   }
-// #endif
-
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(500);
-  //   Serial.print(F("."));
-  //   seconds++;
-  //   if (seconds > 180) {
-  //     // reboot the ESP if cannot connect to wifi
-  //     ESP.restart();
-  //   }
-  // }
-  // seconds = 0;
-  // Serial.println("");
-  // Serial.println(F("Connected to wifi network"));
-  // Serial.print(F("IP address: "));
-  // Serial.println(WiFi.localIP());
-  // Serial.print(F("Signal [RSSI]: "));
-  // Serial.println(WiFi.RSSI());
 
   // Set up the Modbus line
   growattInterface.initGrowatt();
   Serial.println("Modbus connection is set up");
-
-  // server.on("/", []() {                       // Dummy page
-  //   server.send(200, "text/plain", "Growatt Solar Inverter to MQTT Gateway");
-  // });
-  // server.begin();
-  // Serial.println(F("HTTP server started"));
-
-
 
 
   // Set up the MQTT server connection
@@ -429,6 +393,7 @@ void setup() {
     mqtt.setBufferSize(1024);
     mqtt.setCallback(callback);
   }
+
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
 
