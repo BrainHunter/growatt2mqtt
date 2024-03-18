@@ -306,8 +306,6 @@ void setup() {
   // Initialize some variables
   uptime = 0;
   seconds = 0;
-  leds[0] = CRGB::Pink;
-  FastLED.show();
 
   // Connect to Wifi  // this is now handled by IOT WebConf
   // Serial.print(F("Connecting to Wifi"));
@@ -387,8 +385,6 @@ void setup() {
     else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
   });
-
-  //ArduinoOTA.begin();
 
   leds[0] = CRGB::Black;
   FastLED.show();
@@ -498,12 +494,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void loop() {
+  static int ota_once = 0;
 
-  //ArduinoOTA.handle();
   iotWebConf.doLoop();
 
-
-
+  if (WiFi.status() == WL_CONNECTED) {
+    // On the first time Wifi is connected, setup OTA
+    if (ota_once == 0) {
+      ArduinoOTA.begin();
+      ota_once = 1;
+    } else {
+      ArduinoOTA.handle();
+    }
+  }
 
   // Handle MQTT connection/reconnection
   if (strlen(mqtt_server) != 0) {
@@ -543,7 +546,6 @@ void loop() {
 
   }
 }
-
 
 uint32_t timediff(uint32_t t1, uint32_t t2)
 {
