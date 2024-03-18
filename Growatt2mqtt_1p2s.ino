@@ -55,14 +55,25 @@ const char wifiInitialApPassword[] = "growatt2mqttPassword";
 
 void handleRoot();    // handle web requests on "/"
 void configSaved();   // config saved callback
+bool connectAp(const char* apName, const char* password);
+void connectWifi(const char* ssid, const char* password);
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper);
 DNSServer dnsServer;
 
 // IotWebConf Settings:
 #define STRING_LEN 128
 #define NUMBER_LEN 32
 
+char WifiStaticIpValue[STRING_LEN];
+char WifiStaticNetmaskValue[STRING_LEN];
+char WifiStaticGatewayValue[STRING_LEN];
+IPAddress WifiIpAddress;
+IPAddress WifiGateway;
+IPAddress WifiNetmask;
+
 char EthStaticIpValue[STRING_LEN];
 char EthStaticNetmaskValue[STRING_LEN];
+char EthStaticGatewayValue[STRING_LEN];
 
 char mqttServerValue[STRING_LEN];
 char mqttUserNameValue[STRING_LEN];
@@ -71,9 +82,16 @@ char mqttUserPasswordValue[STRING_LEN];
 
 IotWebConf iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
 
+
+iotwebconf::OptionalParameterGroup StaticWifiGroup = iotwebconf::OptionalParameterGroup("wifiStaticIpgroup", "Static Wifi IP", false);
+iotwebconf::TextParameter wifiStaticIpParam = iotwebconf::TextParameter("Static Wifi IP address", "wifiStaticIpid", WifiStaticIpValue, STRING_LEN);
+iotwebconf::TextParameter wifiStaticNetmaskParam = iotwebconf::TextParameter("Static Wifi netmask", "wifiStaticNetmaskid", WifiStaticNetmaskValue, STRING_LEN);
+iotwebconf::TextParameter wifiStaticGatewayParam = iotwebconf::TextParameter("Static Wifi Gateway", "wifiStaticGatewayid", WifiStaticGatewayValue, STRING_LEN);
+
 iotwebconf::OptionalParameterGroup StaticEthGroup = iotwebconf::OptionalParameterGroup("ethStaticIpgroup", "Static ETH IP", false);
 iotwebconf::TextParameter ethStaticIpParam = iotwebconf::TextParameter("Static ETH IP address", "ethStaticIpid", EthStaticIpValue, STRING_LEN);
 iotwebconf::TextParameter ethStaticNetmaskParam = iotwebconf::TextParameter("Static ETH netmask", "ethStaticNetmaskid", EthStaticNetmaskValue, STRING_LEN);
+iotwebconf::TextParameter ethStaticGatewayParam = iotwebconf::TextParameter("Static ETH Gateway", "ethStaticGatewayid", EthStaticGatewayValue, STRING_LEN);
 
 IotWebConfParameterGroup mqttGroup = IotWebConfParameterGroup("mqttgroup", "MQTT configuration");
 IotWebConfTextParameter mqttServerParam = IotWebConfTextParameter("MQTT server", "mqttServerid", mqttServerValue, STRING_LEN);
@@ -85,9 +103,12 @@ iotwebconf::OptionalGroupHtmlFormatProvider optionalGroupHtmlFormatProvider;
 
 void IotWebConfSetup()
 {
-
+  StaticWifiGroup.addItem(&wifiStaticIpParam);
+  StaticWifiGroup.addItem(&wifiStaticNetmaskParam);
+  StaticWifiGroup.addItem(&wifiStaticGatewayParam);
   StaticEthGroup.addItem(&ethStaticIpParam);
   StaticEthGroup.addItem(&ethStaticNetmaskParam);
+  StaticEthGroup.addItem(&ethStaticGatewayParam);
   mqttGroup.addItem(&mqttServerParam);
   mqttGroup.addItem(&mqttUserNameParam);
   mqttGroup.addItem(&mqttUserPasswordParam);
@@ -95,10 +116,14 @@ void IotWebConfSetup()
 
   //iotWebConf.setStatusPin(STATUS_PIN);  // TODO fix this
   iotWebConf.setConfigPin(CONFIG_PIN);
+  iotWebConf.addParameterGroup(&StaticWifiGroup);
   iotWebConf.addParameterGroup(&StaticEthGroup);
   iotWebConf.addParameterGroup(&mqttGroup);
   iotWebConf.setHtmlFormatProvider(&optionalGroupHtmlFormatProvider);
   iotWebConf.setConfigSavedCallback(&configSaved);
+  //iotWebConf.setApConnectionHandler(&connectAp);
+  iotWebConf.setWifiConnectionHandler(&connectWifi);
+  iotWebConf.setFormValidator(&formValidator);
 
   // -- Initializing the configuration.
   iotWebConf.init();
@@ -116,6 +141,60 @@ void IotWebConfSetup()
   }
 
 }
+
+bool formValidator(iotwebconf::WebRequestWrapper* webRequestWrapper)
+{
+  Serial.println("Validating form.");
+  bool valid = true;
+
+  if (StaticWifiGroup.isActive()) {  
+    if (!WifiIpAddress.fromString(webRequestWrapper->arg(wifiStaticIpParam.getId())))
+    {
+      wifiStaticIpParam.errorMessage = "Please provide a valid IP address!";
+      valid = false;
+    }
+    if (!WifiNetmask.fromString(webRequestWrapper->arg(wifiStaticNetmaskParam.getId())))
+    {
+      wifiStaticNetmaskParam.errorMessage = "Please provide a valid netmask!";
+      valid = false;
+    }
+    if (!WifiGateway.fromString(webRequestWrapper->arg(wifiStaticGatewayParam.getId())))
+    {
+      wifiStaticGatewayParam.errorMessage = "Please provide a valid gateway address!";
+      valid = false;
+    }
+  }
+  return valid;
+}
+
+bool connectAp(const char* apName, const char* password)
+{
+  // -- Custom AP settings
+  return WiFi.softAP(apName, password, 4);
+}
+void connectWifi(const char* ssid, const char* password)
+{
+  if(StaticWifiGroup.isActive()) // Use static Wifi address
+  {
+    WifiIpAddress.fromString(String(WifiStaticIpValue));
+    WifiNetmask.fromString(String(WifiStaticNetmaskValue));
+    WifiGateway.fromString(String(WifiStaticGatewayValue));
+
+    if (!WiFi.config(WifiIpAddress, WifiGateway, WifiNetmask)) {
+      Serial.println("STA Failed to configure");
+    }
+    Serial.print("ip: ");
+    Serial.println(WifiIpAddress);
+    Serial.print("gw: ");
+    Serial.println(WifiGateway);
+    Serial.print("net: ");
+    Serial.println(WifiNetmask);
+  }
+  WiFi.begin(ssid, password);
+}
+
+
+
 
 /**
  * Handle web requests to "/" path.
@@ -262,8 +341,7 @@ void timerCallback() {
 // MQTT reconnect logic
 void reconnect() {
   //String mytopic;
-  // Loop until we're reconnected
-  while (!mqtt.connected()) {
+
     Serial.print("Attempting MQTT connection...");
     byte mac[6];                     // the MAC address of your Wifi shield
     WiFi.macAddress(mac);
@@ -282,11 +360,7 @@ void reconnect() {
     } else {
       Serial.print(F("failed, rc="));
       Serial.print(mqtt.state());
-      Serial.println(F(" try again in 5 seconds"));
-      // Wait 5 seconds before retrying
-      delay(5000);
     }
-  }
 }
 
 void setup() {
@@ -498,6 +572,8 @@ void loop() {
 
   iotWebConf.doLoop();
 
+
+
   if (WiFi.status() == WL_CONNECTED) {
     // On the first time Wifi is connected, setup OTA
     if (ota_once == 0) {
@@ -511,7 +587,12 @@ void loop() {
   // Handle MQTT connection/reconnection
   if (strlen(mqtt_server) != 0) {
     if (!mqtt.connected()) {
-      reconnect();
+      static unsigned long reconnectTimer = 0;
+      if(timediff(millis(),reconnectTimer ) > 5000  )
+      {
+        reconnectTimer = millis();
+        reconnect();
+      }
     }
     mqtt.loop();
   }
@@ -522,14 +603,6 @@ void loop() {
     uptime++;
   }
 
-  if (millis() - lastWifiCheck >= WIFICHECK) {
-    // reconnect to the wifi network if connection is lost
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Reconnecting to wifi...");
-      WiFi.reconnect();
-    }
-    lastWifiCheck = millis();
-  }
 
   if (ledoff && (millis() - lastRGB >= RGBSTATUSDELAY)) {
     ledoff = false;
