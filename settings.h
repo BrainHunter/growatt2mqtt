@@ -10,14 +10,16 @@
     #define MAX485_TX       12        // D6, DI pin on the TTL to RS485 converter
     #define STATUS_LED      2         // Status LED on the Wemos D1 mini (D4)
 
+    #define CONFIG_PIN D2             // Pull this pin to GND on startup to reset settings
     #define RGBLED_PIN D3             // Neopixel led D3
 #elif defined(ESP32)
-    #define MAX485_DE       33         // D1, DE pin on the TTL to RS485 converter
-    #define MAX485_RE_NEG   33         // D2, RE pin on the TTL to RS485 converter
+    #define MAX485_DE       33        // D1, DE pin on the TTL to RS485 converter
+    #define MAX485_RE_NEG   33        // D2, RE pin on the TTL to RS485 converter
     #define MAX485_RX       35        // D5, RO pin on the TTL to RS485 converter
     #define MAX485_TX       17        // D6, DI pin on the TTL to RS485 converter
-    #define STATUS_LED      12         // Status LED on the Wemos D1 mini (D4)
+    #define STATUS_LED      12        // Status LED on the Wemos D1 mini (D4)
 
+    #define CONFIG_PIN      32        // Pull this pin to GND on startup to reset settings
     #define RGBLED_PIN      14        // Neopixel led D3
 #endif
 
@@ -31,6 +33,7 @@
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 #define BRIGHTNESS  64        // Default LED brightness.
+
 
 // Update the below parameters for your project
 // Also check NTP.h for some parameters as well
@@ -50,3 +53,11 @@ IPAddress gateway(192, 168, 1, 254);          // Set your Gateway IP address
 IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(192, 168, 1, 254);   //optional
 IPAddress secondaryDNS(8, 8, 4, 4); //optional
+
+
+#define DEFAULT_WIFI_IP_ADDRESS "192.168.1.205"
+#define DEFAULT_WIFI_IP_NETMASK "255.255.255.0"
+#define DEFAULT_WIFI_IP_GATEWAY "192.168.1.254"
+
+
+#define CONFIG_VERSION "gro1"

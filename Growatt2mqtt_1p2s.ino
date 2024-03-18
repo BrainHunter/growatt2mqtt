@@ -8,6 +8,7 @@
 // - ModbusMaster by Doc Walker
 // - ArduinoOTA
 // - SoftwareSerial
+// - IotWebConf
 // Hardware:
 // - Wemos D1 mini
 // - RS485 to TTL converter: https://www.aliexpress.com/item/1005001621798947.html
@@ -23,8 +24,9 @@
     #include <WebServer.h>
 #endif
 
-
-
+#include <IotWebConf.h>
+#include <IotWebConfUsing.h>
+#include <IotWebConfOptionalGroup.h>
 #include <PubSubClient.h>         // MQTT support
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
@@ -46,6 +48,104 @@ CRGB leds[NUM_LEDS];
 growattIF growattInterface(MAX485_RE_NEG, MAX485_DE, MAX485_RX, MAX485_TX);
 
 uint32_t timediff(uint32_t t1, uint32_t t2);
+
+
+// ---- IotWebConf -----
+const char thingName[] = "growatt2mqtt";
+const char wifiInitialApPassword[] = "growatt2mqttPassword";
+
+void handleRoot();    // handle web requests on "/"
+void configSaved();   // config saved callback
+DNSServer dnsServer;
+
+// IotWebConf Settings:
+#define STRING_LEN 128
+#define NUMBER_LEN 32
+
+char EthStaticIpValue[STRING_LEN];
+char EthStaticNetmaskValue[STRING_LEN];
+
+char mqttServerValue[STRING_LEN];
+char mqttUserNameValue[STRING_LEN];
+char mqttUserPasswordValue[STRING_LEN];
+
+
+IotWebConf iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
+
+iotwebconf::OptionalParameterGroup StaticEthGroup = iotwebconf::OptionalParameterGroup("ethStaticIpgroup", "Static ETH IP", false);
+iotwebconf::TextParameter ethStaticIpParam = iotwebconf::TextParameter("Static ETH IP address", "ethStaticIpid", EthStaticIpValue, STRING_LEN);
+iotwebconf::TextParameter ethStaticNetmaskParam = iotwebconf::TextParameter("Static ETH netmask", "ethStaticNetmaskid", EthStaticNetmaskValue, STRING_LEN);
+
+IotWebConfParameterGroup mqttGroup = IotWebConfParameterGroup("mqttgroup", "MQTT configuration");
+IotWebConfTextParameter mqttServerParam = IotWebConfTextParameter("MQTT server", "mqttServerid", mqttServerValue, STRING_LEN);
+IotWebConfTextParameter mqttUserNameParam = IotWebConfTextParameter("MQTT user", "mqttUserid", mqttUserNameValue, STRING_LEN);
+IotWebConfPasswordParameter mqttUserPasswordParam = IotWebConfPasswordParameter("MQTT password", "mqttPassid", mqttUserPasswordValue, STRING_LEN);
+
+
+iotwebconf::OptionalGroupHtmlFormatProvider optionalGroupHtmlFormatProvider;
+
+void IotWebConfSetup()
+{
+
+  StaticEthGroup.addItem(&ethStaticIpParam);
+  StaticEthGroup.addItem(&ethStaticNetmaskParam);
+  mqttGroup.addItem(&mqttServerParam);
+  mqttGroup.addItem(&mqttUserNameParam);
+  mqttGroup.addItem(&mqttUserPasswordParam);
+
+
+  //iotWebConf.setStatusPin(STATUS_PIN);  // TODO fix this
+  iotWebConf.setConfigPin(CONFIG_PIN);
+  iotWebConf.addParameterGroup(&StaticEthGroup);
+  iotWebConf.addParameterGroup(&mqttGroup);
+  iotWebConf.setHtmlFormatProvider(&optionalGroupHtmlFormatProvider);
+  iotWebConf.setConfigSavedCallback(&configSaved);
+
+  // -- Initializing the configuration.
+  iotWebConf.init();
+
+  // -- Set up required URL handlers on the web server.
+  server.on("/", handleRoot);
+  server.on("/config", []{ iotWebConf.handleConfig(); });
+  server.onNotFound([](){ iotWebConf.handleNotFound(); });
+
+  Serial.println("IotWebConfReady.");
+
+  if(StaticEthGroup.isActive())
+  {
+    // use static ETH address 
+  }
+
+}
+
+/**
+ * Handle web requests to "/" path.
+ */
+void handleRoot()
+{
+  // -- Let IotWebConf test and handle captive portal requests.
+  if (iotWebConf.handleCaptivePortal())
+  {
+    // -- Captive portal request were already served.
+    return;
+  }
+  String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
+  s += "<title>IotWebConf 13 Optional Group</title></head><div>Status page of ";
+  s += iotWebConf.getThingName();
+  s += ".</div>";
+
+  
+  s += "Go to <a href='config'>configure page</a> to change values.";
+  s += "</body></html>\n";
+
+  server.send(200, "text/html", s);
+}
+
+void configSaved()
+{
+  Serial.println("Configuration was updated.");
+}
+
 
 void ReadInputRegisters() {
   char json[1024];
@@ -201,40 +301,43 @@ void setup() {
   // Init outputs, RS485 in receive mode
   pinMode(STATUS_LED, OUTPUT);
 
+
+  IotWebConfSetup();
+
   // Initialize some variables
   uptime = 0;
   seconds = 0;
   leds[0] = CRGB::Pink;
   FastLED.show();
 
-  // Connect to Wifi
-  Serial.print(F("Connecting to Wifi"));
-  WiFi.mode(WIFI_STA);
+  // Connect to Wifi  // this is now handled by IOT WebConf
+  // Serial.print(F("Connecting to Wifi"));
+  // WiFi.mode(WIFI_STA);
 
-#ifdef FIXEDIP
-  // Configures static IP address
-  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-    Serial.println("STA Failed to configure");
-  }
-#endif
+// #ifdef FIXEDIP
+//   // Configures static IP address
+//   if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+//     Serial.println("STA Failed to configure");
+//   }
+// #endif
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(F("."));
-    seconds++;
-    if (seconds > 180) {
-      // reboot the ESP if cannot connect to wifi
-      ESP.restart();
-    }
-  }
-  seconds = 0;
-  Serial.println("");
-  Serial.println(F("Connected to wifi network"));
-  Serial.print(F("IP address: "));
-  Serial.println(WiFi.localIP());
-  Serial.print(F("Signal [RSSI]: "));
-  Serial.println(WiFi.RSSI());
+  // WiFi.begin(ssid, password);
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.print(F("."));
+  //   seconds++;
+  //   if (seconds > 180) {
+  //     // reboot the ESP if cannot connect to wifi
+  //     ESP.restart();
+  //   }
+  // }
+  // seconds = 0;
+  // Serial.println("");
+  // Serial.println(F("Connected to wifi network"));
+  // Serial.print(F("IP address: "));
+  // Serial.println(WiFi.localIP());
+  // Serial.print(F("Signal [RSSI]: "));
+  // Serial.println(WiFi.RSSI());
 
   // Set up the Modbus line
   growattInterface.initGrowatt();
@@ -244,11 +347,14 @@ void setup() {
   //os_timer_setfn(&myTimer, timerCallback, NULL);
   //os_timer_arm(&myTimer, 1000, true);
 
-  server.on("/", []() {                       // Dummy page
-    server.send(200, "text/plain", "Growatt Solar Inverter to MQTT Gateway");
-  });
-  server.begin();
-  Serial.println(F("HTTP server started"));
+  // server.on("/", []() {                       // Dummy page
+  //   server.send(200, "text/plain", "Growatt Solar Inverter to MQTT Gateway");
+  // });
+  // server.begin();
+  // Serial.println(F("HTTP server started"));
+
+
+
 
   // Set up the MQTT server connection
   if (strlen(mqtt_server) != 0) {
@@ -256,7 +362,6 @@ void setup() {
     mqtt.setBufferSize(1024);
     mqtt.setCallback(callback);
   }
-
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
 
@@ -289,12 +394,14 @@ void setup() {
     else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
   });
-  ArduinoOTA.begin();
+
+  //ArduinoOTA.begin();
 
   leds[0] = CRGB::Black;
   FastLED.show();
 }
 
+// Callback from MQTT
 void callback(char* topic, byte* payload, unsigned int length) {
   // Convert the incoming byte array to a string
 
@@ -398,9 +505,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void loop() {
-  // Handle HTTP server requests
-  server.handleClient();
-  ArduinoOTA.handle();
+
+  //ArduinoOTA.handle();
+  iotWebConf.doLoop();
+
+
+
 
   // Handle MQTT connection/reconnection
   if (strlen(mqtt_server) != 0) {
