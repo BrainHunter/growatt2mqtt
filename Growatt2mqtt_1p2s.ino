@@ -33,7 +33,6 @@
 #include "settings.h"
 #include "growattInterface.h"
 
-//os_timer_t myTimer;
 #if defined(ESP8266)
 ESP8266WebServer server(80);
 #elif defined(ESP32)
@@ -240,10 +239,6 @@ void setup() {
   growattInterface.initGrowatt();
   Serial.println("Modbus connection is set up");
 
-  // Create the 1 second timer interrupt
-  //os_timer_setfn(&myTimer, timerCallback, NULL);
-  //os_timer_arm(&myTimer, 1000, true);
-
   server.on("/", []() {                       // Dummy page
     server.send(200, "text/plain", "Growatt Solar Inverter to MQTT Gateway");
   });
@@ -271,12 +266,10 @@ void setup() {
   // ArduinoOTA.setPassword((const char *)"123");
 
   ArduinoOTA.onStart([]() {
-    //os_timer_disarm(&myTimer);
     Serial.println("Start");
   });
   ArduinoOTA.onEnd([]() {
     Serial.println("\nEnd");
-    //os_timer_arm(&myTimer, 1000, true);
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
