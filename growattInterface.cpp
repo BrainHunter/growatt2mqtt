@@ -135,27 +135,27 @@ uint8_t growattIF::ReadInputRegisters(char* json) {
 
 
       modbusdata.faultbitcode = ((growattInterface.getResponseBuffer(105 - 64) << 16) | growattInterface.getResponseBuffer(106 - 64));
-      //  0x00000001 \
+      //  0x00000001 
       //  0x00000002 Communication error
-      //  0x00000004 \
+      //  0x00000004 
       //  0x00000008 StrReverse or StrShort fault
       //  0x00000010 Model Init fault
       //  0x00000020 Grid Volt Sample diffirent
       //  0x00000040 ISO Sample diffirent
       //  0x00000080 GFCI Sample diffirent
-      //  0x00000100 \
-      //  0x00000200 \
-      //  0x00000400 \
-      //  0x00000800 \
+      //  0x00000100 
+      //  0x00000200 
+      //  0x00000400 
+      //  0x00000800 
       //  0x00001000 AFCI Fault
-      //  0x00002000 \
+      //  0x00002000 
       //  0x00004000 AFCI Module fault
-      //  0x00008000 \
-      //  0x00010000 \
+      //  0x00008000 
+      //  0x00010000 
       //  0x00020000 Relay check fault
-      //  0x00040000 \
-      //  0x00080000 \
-      //  0x00100000 \
+      //  0x00040000 
+      //  0x00080000 
+      //  0x00100000 
       //  0x00200000 Communication error
       //  0x00400000 Bus Voltage error
       //  0x00800000 AutoTest fail
@@ -172,18 +172,18 @@ uint8_t growattIF::ReadInputRegisters(char* json) {
       //  0x0001 Fan warning
       //  0x0002 String communication abnormal
       //  0x0004 StrPIDconfig Warning
-      //  0x0008 \
+      //  0x0008 
       //  0x0010 DSP and COM firmware unmatch
-      //  0x0020 \
+      //  0x0020 
       //  0x0040 SPD abnormal
       //  0x0080 GND and N connect abnormal
       //  0x0100 PV1 or PV2 circuit short
       //  0x0200 PV1 or PV2 boost driver broken
-      //  0x0400 \
-      //  0x0800 \
-      //  0x1000 \
-      //  0x2000 \
-      //  0x4000 \
+      //  0x0400 
+      //  0x0800 
+      //  0x1000 
+      //  0x2000 
+      //  0x4000 
       //  0x8000
       setcounter = 0;
     }
@@ -257,7 +257,7 @@ uint8_t growattIF::ReadHoldingRegisters(char* json) {
       modbussettings.maxoutputreactivepp = growattInterface.getResponseBuffer(4); // Inverter M ax output reactive power percent  0-100: %, 255: not limited
       modbussettings.maxpower = ((growattInterface.getResponseBuffer(6) << 16) | growattInterface.getResponseBuffer(7)) * 0.1;
       modbussettings.voltnormal = growattInterface.getResponseBuffer(8) * 0.1;
-      strncpy(modbussettings.firmware, "      ", 6);
+      strncpy(modbussettings.firmware, "      ", 7);
       modbussettings.firmware[0] = growattInterface.getResponseBuffer(9) >> 8;
       modbussettings.firmware[1] = growattInterface.getResponseBuffer(9) & 0xff;
       modbussettings.firmware[2] = growattInterface.getResponseBuffer(10) >> 8;
@@ -265,7 +265,7 @@ uint8_t growattIF::ReadHoldingRegisters(char* json) {
       modbussettings.firmware[4] = growattInterface.getResponseBuffer(11) >> 8;
       modbussettings.firmware[5] = growattInterface.getResponseBuffer(11) & 0xff;
 
-      strncpy(modbussettings.controlfirmware, "      ", 6);
+      strncpy(modbussettings.controlfirmware, "      ", 7);
       modbussettings.controlfirmware[0] = growattInterface.getResponseBuffer(12) >> 8;
       modbussettings.controlfirmware[1] = growattInterface.getResponseBuffer(12) & 0xff;
       modbussettings.controlfirmware[2] = growattInterface.getResponseBuffer(13) >> 8;
@@ -275,7 +275,7 @@ uint8_t growattIF::ReadHoldingRegisters(char* json) {
 
       modbussettings.startvoltage = growattInterface.getResponseBuffer(17) * 0.1;
 
-      strncpy(modbussettings.serial, "          ", 10);
+      strncpy(modbussettings.serial, "          ", 11);
       modbussettings.serial[0] = growattInterface.getResponseBuffer(23) >> 8;
       modbussettings.serial[1] = growattInterface.getResponseBuffer(23) & 0xff;
       modbussettings.serial[2] = growattInterface.getResponseBuffer(24) >> 8;
