@@ -117,7 +117,9 @@ void IotWebConfSetup()
   //iotWebConf.setStatusPin(STATUS_PIN);  // TODO fix this
   iotWebConf.setConfigPin(CONFIG_PIN);
   iotWebConf.addParameterGroup(&StaticWifiGroup);
-  iotWebConf.addParameterGroup(&StaticEthGroup);
+#ifdef ARDUINO_WT32_ETH01
+  iotWebConf.addParameterGroup(&StaticEthGroup);  // only available for WT32_ETH01 board
+#endif
   iotWebConf.addParameterGroup(&mqttGroup);
   iotWebConf.setHtmlFormatProvider(&optionalGroupHtmlFormatProvider);
   iotWebConf.setConfigSavedCallback(&configSaved);
@@ -536,8 +538,6 @@ void loop() {
   static int ota_once = 0;
 
   iotWebConf.doLoop();
-
-
 
   if (WiFi.status() == WL_CONNECTED) {
     // On the first time Wifi is connected, setup OTA
