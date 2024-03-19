@@ -33,6 +33,8 @@ The following libraries are used beside the "Standard" ESP8266 libraries:
 - ModbusMaster by Doc Walker
 - ArduinoOTA
 - SoftwareSerial
+- IotWebConf
+ 
 
 
 ## Topic
