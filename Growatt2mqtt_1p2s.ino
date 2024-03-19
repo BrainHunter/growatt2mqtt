@@ -41,7 +41,7 @@ ESP8266WebServer server(80);
 WebServer server(80);
 #endif
 WiFiClient espClient;
-PubSubClient mqtt(mqtt_server, 1883, 0, espClient);
+PubSubClient mqtt(espClient);
 
 CRGB leds[NUM_LEDS];
 growattIF growattInterface(MAX485_RE_NEG, MAX485_DE, MAX485_RX, MAX485_TX);
@@ -84,7 +84,7 @@ char EthStaticGatewayValue[STRING_LEN];
 char mqttServerValue[STRING_LEN];
 char mqttUserNameValue[STRING_LEN];
 char mqttUserPasswordValue[STRING_LEN];
-
+char mqttTopicRootValue[STRING_LEN];
 
 IotWebConf iotWebConf(thingName.c_str(), &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
 
@@ -103,6 +103,7 @@ IotWebConfParameterGroup mqttGroup = IotWebConfParameterGroup("mqttgroup", "MQTT
 IotWebConfTextParameter mqttServerParam = IotWebConfTextParameter("MQTT server", "mqttServerid", mqttServerValue, STRING_LEN);
 IotWebConfTextParameter mqttUserNameParam = IotWebConfTextParameter("MQTT user", "mqttUserid", mqttUserNameValue, STRING_LEN);
 IotWebConfPasswordParameter mqttUserPasswordParam = IotWebConfPasswordParameter("MQTT password", "mqttPassid", mqttUserPasswordValue, STRING_LEN);
+IotWebConfTextParameter mqttTopicRootParam = IotWebConfTextParameter("MQTT Topic Root", "mqttTopicRootid", mqttTopicRootValue, STRING_LEN, "growatt");
 
 
 iotwebconf::OptionalGroupHtmlFormatProvider optionalGroupHtmlFormatProvider;
@@ -118,6 +119,7 @@ void IotWebConfSetup()
   mqttGroup.addItem(&mqttServerParam);
   mqttGroup.addItem(&mqttUserNameParam);
   mqttGroup.addItem(&mqttUserPasswordParam);
+  mqttGroup.addItem(&mqttTopicRootParam);
 
 
   iotWebConf.setStatusPin(STATUS_LED); 
@@ -252,7 +254,7 @@ void ReadInputRegisters() {
 #ifdef DEBUG_SERIAL
     Serial.println(result);
 #endif
-    sprintf(topic, "%s/data", topicRoot);
+    sprintf(topic, "%s/data", mqttTopicRootValue);
     mqtt.publish(topic, json);
     Serial.println("Data MQTT sent");
 
@@ -266,7 +268,7 @@ void ReadInputRegisters() {
     String message = growattInterface.sendModbusError(result);
     Serial.println(message);
     char topic[80];
-    sprintf(topic, "%s/error", topicRoot);
+    sprintf(topic, "%s/error", mqttTopicRootValue);
     mqtt.publish(topic, message.c_str());
     delay(5);
   }
@@ -290,7 +292,7 @@ void ReadHoldingRegisters() {
 #ifdef DEBUG_SERIAL
     Serial.println(json);
 #endif
-    sprintf(topic, "%s/settings", topicRoot);
+    sprintf(topic, "%s/settings", mqttTopicRootValue);
     mqtt.publish(topic, json);
     Serial.println("Setting MQTT sent");
     // Set the flag to true not to read the holding registers again
@@ -306,7 +308,7 @@ void ReadHoldingRegisters() {
     String message = growattInterface.sendModbusError(result);
     Serial.println(message);
     char topic[80];
-    sprintf(topic, "%s/error", topicRoot);
+    sprintf(topic, "%s/error", mqttTopicRootValue);
     mqtt.publish(topic, message.c_str());
     delay(5);
   }
@@ -331,11 +333,11 @@ void timerCallback() {
   // Send RSSI and uptime status
   if (seconds % UPDATE_STATUS == 0) {
     // Send MQTT update
-    if (strlen(mqtt_server) != 0) {
+    if (strlen(mqttServerValue) != 0) {
       char topic[80];
       char value[300];
       sprintf(value, "{\"rssi\": %d, \"uptime\": %lu, \"ssid\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"clientid\":\"%s\", \"version\":\"%s\"}", WiFi.RSSI(), uptime, WiFi.SSID().c_str(), WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3], thingName.c_str(), buildversion);
-      sprintf(topic, "%s/%s", topicRoot, "status");
+      sprintf(topic, "%s/%s", mqttTopicRootValue, "status");
       mqtt.publish(topic, value);
       Serial.println(F("MQTT status sent"));
     }
@@ -345,19 +347,18 @@ void timerCallback() {
 // MQTT reconnect logic
 void reconnect() {
   //String mytopic;
-
     Serial.print("Attempting MQTT connection...");
-    
     Serial.print(F("Client ID: "));
     Serial.println(thingName.c_str());
     // Attempt to connect
     char topic[80];
-    sprintf(topic, "%s/%s", topicRoot, "connection");
-    if (mqtt.connect(thingName.c_str(), mqtt_user, mqtt_password, topic, 1, true, "offline")) { //last will
+    sprintf(topic, "%s/%s", mqttTopicRootValue, "connection");
+    mqtt.setServer(mqttServerValue , 1883);
+    if (mqtt.connect(thingName.c_str(), mqttUserNameValue, mqttUserPasswordValue, topic, 1, true, "offline")) { //last will
       Serial.println(F("connected"));
       // ... and resubscribe
       mqtt.publish(topic, "online", true);
-      sprintf(topic, "%s/write/#", topicRoot);
+      sprintf(topic, "%s/write/#", mqttTopicRootValue);
       mqtt.subscribe(topic);
     } else {
       Serial.print(F("failed, rc="));
@@ -388,9 +389,10 @@ void setup() {
   growattInterface.initGrowatt();
   Serial.println("Modbus connection is set up");
 
+
   // Set up the MQTT server connection
-  if (strlen(mqtt_server) != 0) {
-    mqtt.setServer(mqtt_server, 1883);
+  if (strlen(mqttServerValue) != 0) {
+    mqtt.setServer(mqttServerValue, 1883);
     mqtt.setBufferSize(1024);
     mqtt.setCallback(callback);
   }
@@ -399,11 +401,7 @@ void setup() {
   // ArduinoOTA.setPort(8266);
 
   // Hostname defaults to esp8266-[ChipID]
-  byte mac[6];                     // the MAC address of your Wifi shield
-  WiFi.macAddress(mac);
-  char value[80];
-  sprintf(value, "%s-%02x%02x%02x", clientID, mac[2], mac[1], mac[0]);
-  ArduinoOTA.setHostname(value);
+  ArduinoOTA.setHostname(thingName.c_str());
 
   // No authentication by default
   // ArduinoOTA.setPassword((const char *)"123");
@@ -444,14 +442,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   char expectedTopic[40];
 
-  sprintf(expectedTopic, "%s/write/getSettings", topicRoot);
+  sprintf(expectedTopic, "%s/write/getSettings", mqttTopicRootValue);
   if (strcmp(expectedTopic, topic) == 0) {
     if (strcmp((char *)payload, "ON") == 0) {
       holdingregisters = false;
     }
   }
 
-  sprintf(expectedTopic, "%s/write/setEnable", topicRoot);
+  sprintf(expectedTopic, "%s/write/setEnable", mqttTopicRootValue);
   if (strcmp(expectedTopic, topic) == 0) {
     char json[50];
     char topic[80];
@@ -460,18 +458,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
       growattInterface.writeRegister(growattInterface.regOnOff, 1);
       delay(5);
       sprintf(json, "{ \"enable\":%d}", growattInterface.readRegister(growattInterface.regOnOff));
-      sprintf(topic, "%s/settings", topicRoot);
+      sprintf(topic, "%s/settings", mqttTopicRootValue);
       mqtt.publish(topic, json);
     } else if (strcmp((char *)payload, "OFF") == 0) {
       growattInterface.writeRegister(growattInterface.regOnOff, 0);
       delay(5);
       sprintf(json, "{ \"enable\":%d}", growattInterface.readRegister(growattInterface.regOnOff));
-      sprintf(topic, "%s/settings", topicRoot);
+      sprintf(topic, "%s/settings", mqttTopicRootValue);
       mqtt.publish(topic, json);
     }
   }
 
-  sprintf(expectedTopic, "%s/write/setMaxOutput", topicRoot);
+  sprintf(expectedTopic, "%s/write/setMaxOutput", mqttTopicRootValue);
   if (strcmp(expectedTopic, topic) == 0) {
     char json[50];
     char topic[80];
@@ -481,12 +479,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
       holdingregisters = false;
     } else {
       sprintf(json, "last trasmition has faild with: %s", growattInterface.sendModbusError(result).c_str());
-      sprintf(topic, "%s/error", topicRoot);
+      sprintf(topic, "%s/error", mqttTopicRootValue);
       mqtt.publish(topic, json);
     }
   }
 
-  sprintf(expectedTopic, "%s/write/setStartVoltage", topicRoot);
+  sprintf(expectedTopic, "%s/write/setStartVoltage", mqttTopicRootValue);
   if (strcmp(expectedTopic, topic) == 0) {
     char json[50];
     char topic[80];
@@ -496,13 +494,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
       holdingregisters = false;
     } else {
       sprintf(json, "last trasmition has faild with: %s", growattInterface.sendModbusError(result).c_str());
-      sprintf(topic, "%s/error", topicRoot);
+      sprintf(topic, "%s/error", mqttTopicRootValue);
       mqtt.publish(topic, json);
     }
   }
 
 #ifdef useModulPower
-  sprintf(expectedTopic, "%s/write/setModulPower", topicRoot);
+  sprintf(expectedTopic, "%s/write/setModulPower", mqttTopicRootValue);
   if (strcmp(expectedTopic, topic) == 0) {
     char json[50];
     char topic[80];
@@ -519,7 +517,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       holdingregisters = false;
     } else {
       sprintf(json, "last trasmition has faild with: %s", growattInterface.sendModbusError(result).c_str());
-      sprintf(topic, "%s/error", topicRoot);
+      sprintf(topic, "%s/error", mqttTopicRootValue);
       mqtt.publish(topic, json);
     }
   }
@@ -549,7 +547,7 @@ void loop() {
   }
 
   // Handle MQTT connection/reconnection
-  if (strlen(mqtt_server) != 0) {
+  if (strlen(mqttServerValue) != 0) {
     if (!mqtt.connected()) {
       static unsigned long reconnectTimer = 0;
       if(timediff(millis(),reconnectTimer ) > 5000  )
