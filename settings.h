@@ -22,6 +22,7 @@
 
     #define CONFIG_PIN      32      // Pull this pin to GND on startup to reset settings
     #define RGBLED_PIN      14      // Neopixel led
+    
 
 #elif defined(ESP32)                // GENERIC ESP32 board
     #define MAX485_DE       33      // DE pin on the TTL to RS485 converter
@@ -48,3 +49,33 @@
 
 
 #define CONFIG_VERSION "gro1"
+
+// special defines for the ethernet part of the WT32_ETH01 Board
+#ifdef ARDUINO_WT32_ETH01
+    /* 
+    * ETH_CLOCK_GPIO0_IN   - default: external clock from crystal oscillator
+    * ETH_CLOCK_GPIO0_OUT  - 50MHz clock from internal APLL output on GPIO0 - possibly an inverter is needed for LAN8720
+    * ETH_CLOCK_GPIO16_OUT - 50MHz clock from internal APLL output on GPIO16 - possibly an inverter is needed for LAN8720
+    * ETH_CLOCK_GPIO17_OUT - 50MHz clock from internal APLL inverted output on GPIO17 - tested with LAN8720
+    */
+    //#undefine ETH_CLK_MODE
+    //#define ETH_CLK_MODE    ETH_CLOCK_GPIO17_OUT
+
+    // Pin# of the enable signal for the external crystal oscillator (-1 to disable for internal APLL source)
+    #define ETH_POWER_PIN   16
+
+    // Type of the Ethernet PHY (LAN8720 or TLK110)
+    #define ETH_TYPE        ETH_PHY_LAN8720
+
+    // I²C-address of Ethernet PHY (0 or 1 for LAN8720, 31 for TLK110)
+    #define ETH_ADDR        1
+
+    // Pin# of the I²C clock signal for the Ethernet PHY
+    #define ETH_MDC_PIN     23
+
+    // Pin# of the I²C IO signal for the Ethernet PHY
+    #define ETH_MDIO_PIN    18
+
+    // MAC address of Device 1
+    uint8_t mac[] = {0xDE, 0xAD, 0xAE, 0xEF, 0xFE, 0xEE};
+#endif

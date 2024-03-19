@@ -24,6 +24,10 @@
     #include <WebServer.h>
 #endif
 
+#ifdef ARDUINO_WT32_ETH01
+  #include <ETH.h>
+#endif
+
 #include <IotWebConf.h>
 #include <IotWebConfUsing.h>
 #include <IotWebConfOptionalGroup.h>
@@ -80,6 +84,9 @@ IPAddress WifiNetmask;
 char EthStaticIpValue[STRING_LEN];
 char EthStaticNetmaskValue[STRING_LEN];
 char EthStaticGatewayValue[STRING_LEN];
+IPAddress EthIpAddress;
+IPAddress EthGateway;
+IPAddress EthNetmask;
 
 char mqttServerValue[STRING_LEN];
 char mqttUserNameValue[STRING_LEN];
@@ -384,6 +391,19 @@ void setup() {
   uptime = 0;
   seconds = 0;
 
+
+  //init ETH:
+#ifdef ARDUINO_WT32_ETH01
+  ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE, ETH_CLK_MODE);
+  //ETH.macAddress(mac);
+  if(StaticEthGroup.isActive())
+  {
+    EthIpAddress.fromString(String(EthStaticIpValue));
+    EthNetmask.fromString(String(EthStaticNetmaskValue));
+    EthGateway.fromString(String(EthStaticGatewayValue));
+    ETH.config(EthIpAddress, EthGateway, EthNetmask);
+  }
+#endif
 
   // Set up the Modbus line
   growattInterface.initGrowatt();
