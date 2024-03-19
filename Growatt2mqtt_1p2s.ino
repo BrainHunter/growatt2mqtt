@@ -50,7 +50,13 @@ uint32_t timediff(uint32_t t1, uint32_t t2);
 
 
 // ---- IotWebConf -----
-const char thingName[] = "growatt2mqtt";
+#ifdef ESP8266
+String ChipId = String(ESP.getChipId(), HEX);
+#elif ESP32
+String ChipId = String((uint32_t)ESP.getEfuseMac(), HEX);
+#endif
+
+String thingName = "growatt2mqtt"+ ChipId;
 const char wifiInitialApPassword[] = "growatt2mqttPassword";
 
 void handleRoot();    // handle web requests on "/"
@@ -80,7 +86,7 @@ char mqttUserNameValue[STRING_LEN];
 char mqttUserPasswordValue[STRING_LEN];
 
 
-IotWebConf iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
+IotWebConf iotWebConf(thingName.c_str(), &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
 
 
 iotwebconf::OptionalParameterGroup StaticWifiGroup = iotwebconf::OptionalParameterGroup("wifiStaticIpgroup", "Static Wifi IP", false);
@@ -328,7 +334,7 @@ void timerCallback() {
     if (strlen(mqtt_server) != 0) {
       char topic[80];
       char value[300];
-      sprintf(value, "{\"rssi\": %d, \"uptime\": %lu, \"ssid\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"clientid\":\"%s\", \"version\":\"%s\"}", WiFi.RSSI(), uptime, WiFi.SSID().c_str(), WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3], newclientid, buildversion);
+      sprintf(value, "{\"rssi\": %d, \"uptime\": %lu, \"ssid\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"clientid\":\"%s\", \"version\":\"%s\"}", WiFi.RSSI(), uptime, WiFi.SSID().c_str(), WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3], thingName.c_str(), buildversion);
       sprintf(topic, "%s/%s", topicRoot, "status");
       mqtt.publish(topic, value);
       Serial.println(F("MQTT status sent"));
@@ -341,15 +347,13 @@ void reconnect() {
   //String mytopic;
 
     Serial.print("Attempting MQTT connection...");
-    byte mac[6];                     // the MAC address of your Wifi shield
-    WiFi.macAddress(mac);
-    sprintf(newclientid, "%s-%02x%02x%02x", clientID, mac[2], mac[1], mac[0]);
+    
     Serial.print(F("Client ID: "));
-    Serial.println(newclientid);
+    Serial.println(thingName.c_str());
     // Attempt to connect
     char topic[80];
     sprintf(topic, "%s/%s", topicRoot, "connection");
-    if (mqtt.connect(newclientid, mqtt_user, mqtt_password, topic, 1, true, "offline")) { //last will
+    if (mqtt.connect(thingName.c_str(), mqtt_user, mqtt_password, topic, 1, true, "offline")) { //last will
       Serial.println(F("connected"));
       // ... and resubscribe
       mqtt.publish(topic, "online", true);
