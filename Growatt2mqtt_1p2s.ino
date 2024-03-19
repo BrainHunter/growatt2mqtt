@@ -114,7 +114,7 @@ void IotWebConfSetup()
   mqttGroup.addItem(&mqttUserPasswordParam);
 
 
-  //iotWebConf.setStatusPin(STATUS_PIN);  // TODO fix this
+  iotWebConf.setStatusPin(STATUS_LED); 
   iotWebConf.setConfigPin(CONFIG_PIN);
   iotWebConf.addParameterGroup(&StaticWifiGroup);
 #ifdef ARDUINO_WT32_ETH01
@@ -235,7 +235,6 @@ void ReadInputRegisters() {
   FastLED.show();
   uint8_t result;
 
-  digitalWrite(STATUS_LED, 0);
 
   result = growattInterface.ReadInputRegisters(json);
   if (result == growattInterface.Success) {
@@ -265,7 +264,6 @@ void ReadInputRegisters() {
     mqtt.publish(topic, message.c_str());
     delay(5);
   }
-  digitalWrite(STATUS_LED, 1);
 }
 
 void ReadHoldingRegisters() {
@@ -276,7 +274,6 @@ void ReadHoldingRegisters() {
   FastLED.show();
   uint8_t result;
 
-  digitalWrite(STATUS_LED, 0);
   result = growattInterface.ReadHoldingRegisters(json);
   if (result == growattInterface.Success)   {
     leds[0] = CRGB::Green;
@@ -307,7 +304,6 @@ void ReadHoldingRegisters() {
     mqtt.publish(topic, message.c_str());
     delay(5);
   }
-  digitalWrite(STATUS_LED, 1);
 }
 
 // This is the 1 second timer callback function
