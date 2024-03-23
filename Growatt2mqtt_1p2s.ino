@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "settings.h"
 #include "growattInterface.h"
+#include "HttpServerData.h"
 
 #if defined(ESP8266)
 ESP8266WebServer server(80);
@@ -156,6 +157,7 @@ void IotWebConfSetup()
   // -- Set up required URL handlers on the web server.
   server.on("/", handleRoot);
   server.on("/config", []{ iotWebConf.handleConfig(); });
+  server.on("/request", handleDataRequest);
   server.onNotFound([](){ iotWebConf.handleNotFound(); });
 
   Serial.println("IotWebConfReady.");
@@ -220,7 +222,6 @@ void connectWifi(const char* ssid, const char* password)
 
 
 
-
 /**
  * Handle web requests to "/" path.
  */
@@ -232,16 +233,113 @@ void handleRoot()
     // -- Captive portal request were already served.
     return;
   }
-  String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
-  s += "<title>IotWebConf 13 Optional Group</title></head><div>Status page of ";
-  s += iotWebConf.getThingName();
-  s += ".</div>";
 
-  
-  s += "Go to <a href='config'>configure page</a> to change values.";
-  s += "</body></html>\n";
 
-  server.send(200, "text/html", s);
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send_P(200, "text/html", index_html_top);
+
+  String s = "<h1>Growatt2mqtt</h1>";
+  s += "<h2>Status</h2>";
+
+  s += "<table><tr>";
+  s += "<td>Wifi SSID:</td>";
+  s += "<td><span id=\"wifiSSID\">"+ String(WiFi.SSID()) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>Wifi RSSI:</td>";
+  s += "<td><span id=\"wifiRSSI\">"+ String(WiFi.RSSI()) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>Wifi IP:</td>";
+  s += "<td><span id=\"wifiIP\">"+ String(WiFi.localIP()[0]) + "." + String(WiFi.localIP()[1]) + "." + String(WiFi.localIP()[2]) + "." + String(WiFi.localIP()[3]) + "</span></td>";
+#ifdef ARDUINO_WT32_ETH01 
+  s += "</tr><tr>";
+  s += "<td>Eth IP:</td>";
+  s += "<td><span id=\"ethIP\">"+ String(ETH.localIP()[0]) + "." + String(ETH.localIP()[1]) + "." + String(ETH.localIP()[2]) + "." + String(ETH.localIP()[3]) + "</span></td>";
+#endif
+  s += "</tr></table>";
+
+  s += "<br><br>";
+  s += "Go to <a href='config'>configure page</a> to change values. <br>";
+  s += "Firmware Version: ";
+  s += buildversion;
+  s += " - ";
+  //s += "Date: " ;
+  s += __DATE__;
+  s += " ";
+  s += __TIME__;
+
+  server.sendContent(s);
+  server.sendContent_P(index_html_bottom);
+  server.sendContent("");
+}
+
+void handleDataRequest() 
+{
+  String value = "";   
+  if(server.hasArg("voltage"))
+  {
+    //value = String(systemStatus.output.voltage);
+  }
+  else if(server.hasArg("outputCurrent"))
+  {
+    //value = String(systemStatus.output.current);
+  }
+  else if(server.hasArg("outputPower"))
+  {
+    //value = String(systemStatus.output.power);
+  }
+  else if(server.hasArg("frequency"))
+  {
+    //value = String(systemStatus.output.frequency);
+  }
+  else if(server.hasArg("outputPowerfactor"))
+  {
+    //value = String(systemStatus.output.pf);
+  }
+  else if(server.hasArg("outputPwm"))
+  {
+    //value = String(systemStatus.pwm);
+  }
+  else if(server.hasArg("solarPvPower"))
+  {
+    //value = String(systemStatus.solar.pvPower);
+  }
+  else if(server.hasArg("solarOutputPower"))
+  {
+    //value = String(systemStatus.solar.outputPower);
+  }
+  else if(server.hasArg("solarBatteryPower"))
+  {
+    //value = String(systemStatus.solar.batteryPower);
+  }
+  else if(server.hasArg("solarBatterySoc"))
+  {
+    //value = String(systemStatus.solar.batterySoc);
+  }
+  else if(server.hasArg("predictedPower"))
+  {
+    //value = String(systemStatus.prediction.power);
+  }
+  else if(server.hasArg("systemMode"))
+  {
+    //value = modeToString(systemStatus.mode);
+  }
+  else if(server.hasArg("wifiRSSI"))
+  {
+    value = String(WiFi.RSSI());
+  }
+  else if(server.hasArg("wifiSSID"))
+  {
+    value = String(WiFi.SSID());
+  }
+  else
+  {
+    value = "unknown arg: ";
+    value += String(server.args());
+    value += " - ";
+    value += server.arg(1);
+
+  }
+  server.send(200, "text/plane", value);
 }
 
 void configSaved()
