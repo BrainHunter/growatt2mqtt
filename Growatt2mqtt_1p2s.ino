@@ -18,10 +18,12 @@
     #define HARDWARE "ESP8266"
     #include <ESP8266WiFi.h>          // Wifi connection
     #include <ESP8266WebServer.h>     // Web server for general HTTP response
+    #include <ESP8266HTTPUpdateServer.h>
 #elif defined(ESP32)
     #define HARDWARE "ESP32"
     #include "WiFi.h"
     #include <WebServer.h>
+    #include <IotWebConfESP32HTTPUpdateServer.h>
 #endif
 
 #ifdef ARDUINO_WT32_ETH01
@@ -41,8 +43,10 @@
 
 #if defined(ESP8266)
 ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
 #elif defined(ESP32)
 WebServer server(80);
+HTTPUpdateServer httpUpdater;
 #endif
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
@@ -141,6 +145,10 @@ void IotWebConfSetup()
   //iotWebConf.setApConnectionHandler(&connectAp);
   iotWebConf.setWifiConnectionHandler(&connectWifi);
   iotWebConf.setFormValidator(&formValidator);
+
+  iotWebConf.setupUpdateServer(
+    [](const char* updatePath) { httpUpdater.setup(&server, updatePath); },
+    [](const char* userName, char* password) { httpUpdater.updateCredentials(userName, password); });
 
   // -- Initializing the configuration.
   iotWebConf.init();
@@ -277,7 +285,6 @@ void ReadInputRegisters() {
     char topic[80];
     sprintf(topic, "%s/error", mqttTopicRootValue);
     mqtt.publish(topic, message.c_str());
-    delay(5);
   }
 }
 
