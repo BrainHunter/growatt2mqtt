@@ -234,6 +234,7 @@ void handleRoot()
     return;
   }
 
+  struct growattIF::modbus_input_registers modbusdata =  growattInterface.getInputRegisters();
 
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.send_P(200, "text/html", index_html_top);
@@ -242,6 +243,49 @@ void handleRoot()
   s += "<h2>Status</h2>";
 
   s += "<table><tr>";
+
+  // ------------------- modbus data ---------------
+  /*  int status;
+      float solarpower, pv1voltage, pv1current, pv1power, pv2voltage, pv2current, pv2power, outputpower, gridfrequency, gridvoltage;
+      float energytoday, energytotal, totalworktime, pv1energytoday, pv1energytotal, pv2energytoday, pv2energytotal, opfullpower;
+      float tempinverter, tempipm, tempboost;
+      int ipf, realoppercent, deratingmode, faultcode, faultbitcode, warningbitcode;
+  */
+  s += "<td>Growatt Status:</td>";
+  s += "<td><span id=\"growatt_status\">"+ String(modbusdata.status) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>solarpower:</td>";
+  s += "<td><span id=\"growatt_solarpower\">"+ String(modbusdata.solarpower) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv1voltage:</td>";
+  s += "<td><span id=\"growatt_pv1voltage\">"+ String(modbusdata.pv1voltage) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv1current:</td>";
+  s += "<td><span id=\"growatt_pv1current\">"+ String(modbusdata.pv1current) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv1power:</td>";
+  s += "<td><span id=\"growatt_pv1power\">"+ String(modbusdata.pv1power) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv2voltage:</td>";
+  s += "<td><span id=\"growatt_pv2voltage\">"+ String(modbusdata.pv2voltage) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv2current:</td>";
+  s += "<td><span id=\"growatt_pv2current\">"+ String(modbusdata.pv2current) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>pv2power:</td>";
+  s += "<td><span id=\"growatt_pv2power\">"+ String(modbusdata.pv2power) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>outputpower:</td>";
+  s += "<td><span id=\"growatt_outputpower\">"+ String(modbusdata.outputpower) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>gridfrequency:</td>";
+  s += "<td><span id=\"growatt_gridfrequency\">"+ String(modbusdata.gridfrequency) + "</span></td>"; 
+  s += "</tr><tr>";
+  s += "<td>gridvoltage:</td>";
+  s += "<td><span id=\"growatt_gridvoltage\">"+ String(modbusdata.gridvoltage) + "</span></td>"; 
+  s += "</tr><tr>";
+
+  // ------------------- System things ---------------
   s += "<td>Wifi SSID:</td>";
   s += "<td><span id=\"wifiSSID\">"+ String(WiFi.SSID()) + "</span></td>"; 
   s += "</tr><tr>";
@@ -422,7 +466,7 @@ void ReadHoldingRegisters() {
     char topic[80];
     sprintf(topic, "%s/error", mqttTopicRootValue);
     mqtt.publish(topic, message.c_str());
-    delay(5);
+    iotWebConf.delay(5);
   }
 }
 
@@ -551,6 +595,8 @@ void setup() {
 
   leds[0] = CRGB::Black;
   FastLED.show();
+
+  iotWebConf.goOffLine();
 }
 
 // Callback from MQTT
@@ -581,13 +627,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
     if (strcmp((char *)payload, "ON") == 0) {
       growattInterface.writeRegister(growattInterface.regOnOff, 1);
-      delay(5);
+      iotWebConf.delay(5);
       sprintf(json, "{ \"enable\":%d}", growattInterface.readRegister(growattInterface.regOnOff));
       sprintf(topic, "%s/settings", mqttTopicRootValue);
       mqtt.publish(topic, json);
     } else if (strcmp((char *)payload, "OFF") == 0) {
       growattInterface.writeRegister(growattInterface.regOnOff, 0);
-      delay(5);
+      iotWebConf.delay(5);
       sprintf(json, "{ \"enable\":%d}", growattInterface.readRegister(growattInterface.regOnOff));
       sprintf(topic, "%s/settings", mqttTopicRootValue);
       mqtt.publish(topic, json);
@@ -631,12 +677,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     char topic[80];
 
     growattInterface.writeRegister(growattInterface.regOnOff, 0);
-    delay(500);
+    iotWebConf.delay(500);
 
     result = growattInterface.writeRegister(growattInterface.regModulPower, int(strtol(message.c_str(), NULL, 16)));
-    delay(500);
+    iotWebConf.delay(500);
     growattInterface.writeRegister(growattInterface.regOnOff, 1);
-    delay(1500);
+    iotWebConf.delay(1500);
 
     if (result == growattInterface.Success) {
       holdingregisters = false;

@@ -16,7 +16,7 @@
 #elif defined(ARDUINO_WT32_ETH01)   // WT32_ETH01
     #define MAX485_DE       33      // DE pin on the TTL to RS485 converter
     #define MAX485_RE_NEG   33      // RE pin on the TTL to RS485 converter
-    #define MAX485_RX       35      // RO pin on the TTL to RS485 converter
+    #define MAX485_RX       5      // RO pin on the TTL to RS485 converter
     #define MAX485_TX       17      // DI pin on the TTL to RS485 converter
     #define STATUS_LED      12      // Status LED on the Wemos D1 mini (D4)
 
@@ -27,7 +27,7 @@
 #elif defined(ESP32)                // GENERIC ESP32 board
     #define MAX485_DE       33      // DE pin on the TTL to RS485 converter
     #define MAX485_RE_NEG   33      // RE pin on the TTL to RS485 converter
-    #define MAX485_RX       35      // RO pin on the TTL to RS485 converter
+    #define MAX485_RX       5      // RO pin on the TTL to RS485 converter
     #define MAX485_TX       17      // DI pin on the TTL to RS485 converter
     #define STATUS_LED      12      // Status LED on the Wemos D1 mini (D4)
 
