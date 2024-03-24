@@ -595,8 +595,6 @@ void setup() {
 
   leds[0] = CRGB::Black;
   FastLED.show();
-
-  iotWebConf.goOffLine();
 }
 
 // Callback from MQTT
