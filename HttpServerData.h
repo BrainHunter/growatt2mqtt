@@ -11,7 +11,8 @@ const char index_html_top[] PROGMEM = R"rawliteral(
     .slider { -webkit-appearance: none; margin: 14px; width: 360px; height: 25px; background: #FFD65C;
       outline: none; -webkit-transition: .2s; transition: opacity .2s;}
     .slider::-webkit-slider-thumb {-webkit-appearance: none; appearance: none; width: 35px; height: 35px; background: #003249; cursor: pointer;}
-    .slider::-moz-range-thumb { width: 35px; height: 35px; background: #003249; cursor: pointer; } 
+    .slider::-moz-range-thumb { width: 35px; height: 35px; background: #003249; cursor: pointer; }
+    td{text-align: right;} 
   </style>
 </head>
 <body>
@@ -34,19 +35,23 @@ function getData (element,data) {
  
  setInterval(function() 
 {
-  //getData('outputVoltage','voltage');
-  //getData('outputCurrent','outputCurrent');
-  //getData('frequency','frequency');
-  //getData('outputPowerFactor','outputPowerfactor');
-  //getData('outputPower','outputPower');
-  //getData('outputPwm','outputPwm');
-  //getData('solarOutputPower','solarOutputPower');
-  //getData('solarPvPower','solarPvPower');
-  //getData('solarBatteryPower','solarBatteryPower');
-  //getData('solarBatterySoc','solarBatterySoc');
-  //getData('systemMode','systemMode');
+  getData('growatt_status','growatt_status');
+  getData('growatt_solarpower','growatt_solarpower');
+  getData('growatt_pv1voltage','growatt_pv1voltage');
+  getData('growatt_pv1current','growatt_pv1current');
+  getData('growatt_pv1power','growatt_pv1power');
+  getData('growatt_pv2voltage','growatt_pv2voltage');
+  getData('growatt_pv2current','growatt_pv2current');
+  getData('growatt_pv2power','growatt_pv2power');
+  getData('growatt_outputpower','growatt_outputpower');
+  getData('growatt_gridfrequency','growatt_gridfrequency');
+  getData('growatt_gridvoltage','growatt_gridvoltage');
+  getData('growatt_energytoday','growatt_energytoday');
+  getData('growatt_energytotal','growatt_energytotal');
+  getData('growatt_totalworktime','growatt_totalworktime');
+  getData('growatt_tempinverter','growatt_tempinverter');
   getData('wifiRSSI','wifiRSSI');
-}, 2000); 
+}, 4000); 
 </script>
 </body>
 </html>

@@ -242,7 +242,7 @@ void handleRoot()
   String s = "<h1>Growatt2mqtt</h1>";
   s += "<h2>Status</h2>";
 
-  s += "<table><tr>";
+  s += "<table align=\"center\" width=\"100%\"><tr>";
 
   // ------------------- modbus data ---------------
   /*  int status;
@@ -251,38 +251,60 @@ void handleRoot()
       float tempinverter, tempipm, tempboost;
       int ipf, realoppercent, deratingmode, faultcode, faultbitcode, warningbitcode;
   */
-  s += "<td>Growatt Status:</td>";
+  s += "<td></td><td>Status:</td>";
   s += "<td><span id=\"growatt_status\">"+ String(modbusdata.status) + "</span></td>"; 
   s += "</tr><tr>";
-  s += "<td>solarpower:</td>";
-  s += "<td><span id=\"growatt_solarpower\">"+ String(modbusdata.solarpower) + "</span></td>"; 
+  s += "</td><td>";
   s += "</tr><tr>";
-  s += "<td>pv1voltage:</td>";
-  s += "<td><span id=\"growatt_pv1voltage\">"+ String(modbusdata.pv1voltage) + "</span></td>"; 
+  s += "<td>Solar Power:</td>";
+  s += "<td><span id=\"growatt_solarpower\">"+ String(modbusdata.solarpower) + "</span> W</td>"; 
+  s += "<td>Output Power:</td>";
+  s += "<td><span id=\"growatt_outputpower\">"+ String(modbusdata.outputpower) + "</span> W</td>"; 
   s += "</tr><tr>";
-  s += "<td>pv1current:</td>";
-  s += "<td><span id=\"growatt_pv1current\">"+ String(modbusdata.pv1current) + "</span></td>"; 
+  s += "<td>Energy Today:</td>";
+  s += "<td><span id=\"growatt_energytoday\">"+ String(modbusdata.energytoday) + "</span> kWh</td>"; 
+  s += "<td>Energy Total:</td>";
+  s += "<td><span id=\"growatt_energytotal\">"+ String(modbusdata.energytotal) + "</span> kWh</td>"; 
   s += "</tr><tr>";
-  s += "<td>pv1power:</td>";
-  s += "<td><span id=\"growatt_pv1power\">"+ String(modbusdata.pv1power) + "</span></td>"; 
+  s += "<td>Total Worktime:</td>";
+  s += "<td><span id=\"growatt_totalworktime\">"+ String(modbusdata.totalworktime/3600.0) + "</span> h</td>"; 
+  s += "<td>Temp Inverter:</td>";
+  s += "<td><span id=\"growatt_tempinverter\">"+ String(modbusdata.tempinverter) + "</span> &deg;C</td>"; 
   s += "</tr><tr>";
-  s += "<td>pv2voltage:</td>";
-  s += "<td><span id=\"growatt_pv2voltage\">"+ String(modbusdata.pv2voltage) + "</span></td>"; 
+  s += "</td><td>";
   s += "</tr><tr>";
-  s += "<td>pv2current:</td>";
-  s += "<td><span id=\"growatt_pv2current\">"+ String(modbusdata.pv2current) + "</span></td>"; 
+  s += "<td>PV1 Voltage:</td>";
+  s += "<td><span id=\"growatt_pv1voltage\">"+ String(modbusdata.pv1voltage) + "</span> V</td>"; 
+  s += "<td>PV2 Voltage:</td>";
+  s += "<td><span id=\"growatt_pv2voltage\">"+ String(modbusdata.pv2voltage) + "</span> V</td>"; 
   s += "</tr><tr>";
-  s += "<td>pv2power:</td>";
-  s += "<td><span id=\"growatt_pv2power\">"+ String(modbusdata.pv2power) + "</span></td>"; 
+  s += "<td>PV1 Current:</td>";
+  s += "<td><span id=\"growatt_pv1current\">"+ String(modbusdata.pv1current) + "</span> A</td>"; 
+  s += "<td>PV2 Current:</td>";
+  s += "<td><span id=\"growatt_pv2current\">"+ String(modbusdata.pv2current) + "</span> A</td>"; 
   s += "</tr><tr>";
-  s += "<td>outputpower:</td>";
-  s += "<td><span id=\"growatt_outputpower\">"+ String(modbusdata.outputpower) + "</span></td>"; 
+  s += "<td>PV1 Power:</td>";
+  s += "<td><span id=\"growatt_pv1power\">"+ String(modbusdata.pv1power) + "</span> W</td>"; 
+  s += "<td>PV2 Power:</td>";
+  s += "<td><span id=\"growatt_pv2power\">"+ String(modbusdata.pv2power) + "</span> W</td>"; 
   s += "</tr><tr>";
-  s += "<td>gridfrequency:</td>";
-  s += "<td><span id=\"growatt_gridfrequency\">"+ String(modbusdata.gridfrequency) + "</span></td>"; 
+  
+
+  
   s += "</tr><tr>";
-  s += "<td>gridvoltage:</td>";
-  s += "<td><span id=\"growatt_gridvoltage\">"+ String(modbusdata.gridvoltage) + "</span></td>"; 
+
+  s += "</tr><tr>";
+  s += "</td><td>";
+  s += "</tr><tr>";
+  s += "<td>Grid Frequency:</td>";
+  s += "<td><span id=\"growatt_gridfrequency\">"+ String(modbusdata.gridfrequency) + "</span> Hz</td>"; 
+  s += "<td>Grid Voltage:</td>";
+  s += "<td><span id=\"growatt_gridvoltage\">"+ String(modbusdata.gridvoltage) + "</span> V</td>"; 
+  s += "</tr><tr>";
+
+  // spacer
+  s += "<td>&nbsp;</td>";
+  s += "<td>&nbsp;</td>"; 
   s += "</tr><tr>";
 
   // ------------------- System things ---------------
@@ -318,54 +340,67 @@ void handleRoot()
 
 void handleDataRequest() 
 {
+  struct growattIF::modbus_input_registers modbusdata =  growattInterface.getInputRegisters();
   String value = "";   
-  if(server.hasArg("voltage"))
+  if(server.hasArg("growatt_status"))
   {
-    //value = String(systemStatus.output.voltage);
+    value = String(modbusdata.status);
   }
-  else if(server.hasArg("outputCurrent"))
+  else if(server.hasArg("growatt_solarpower"))
   {
-    //value = String(systemStatus.output.current);
+    value = String(modbusdata.solarpower);
   }
-  else if(server.hasArg("outputPower"))
+  else if(server.hasArg("growatt_pv1voltage"))
   {
-    //value = String(systemStatus.output.power);
+    value = String(modbusdata.pv1voltage);
   }
-  else if(server.hasArg("frequency"))
+  else if(server.hasArg("growatt_pv1current"))
   {
-    //value = String(systemStatus.output.frequency);
+    value = String(modbusdata.pv1current);
   }
-  else if(server.hasArg("outputPowerfactor"))
+  else if(server.hasArg("growatt_pv1power"))
   {
-    //value = String(systemStatus.output.pf);
+    value = String(modbusdata.pv1power);
   }
-  else if(server.hasArg("outputPwm"))
+  else if(server.hasArg("growatt_pv2voltage"))
   {
-    //value = String(systemStatus.pwm);
+    value = String(modbusdata.pv2voltage);
   }
-  else if(server.hasArg("solarPvPower"))
+  else if(server.hasArg("growatt_pv2current"))
   {
-    //value = String(systemStatus.solar.pvPower);
+    value = String(modbusdata.pv2current);
   }
-  else if(server.hasArg("solarOutputPower"))
+  else if(server.hasArg("growatt_pv2power"))
   {
-    //value = String(systemStatus.solar.outputPower);
+    value = String(modbusdata.pv2power);
   }
-  else if(server.hasArg("solarBatteryPower"))
+  else if(server.hasArg("growatt_outputpower"))
   {
-    //value = String(systemStatus.solar.batteryPower);
+    value = String(modbusdata.outputpower);
   }
-  else if(server.hasArg("solarBatterySoc"))
+  else if(server.hasArg("growatt_gridfrequency"))
   {
-    //value = String(systemStatus.solar.batterySoc);
+    value = String(modbusdata.gridfrequency);
   }
-  else if(server.hasArg("predictedPower"))
+  else if(server.hasArg("growatt_gridvoltage"))
   {
-    //value = String(systemStatus.prediction.power);
+    value = String(modbusdata.gridvoltage);
   }
-  else if(server.hasArg("systemMode"))
+  else if(server.hasArg("growatt_energytoday"))
   {
-    //value = modeToString(systemStatus.mode);
+    value = String(modbusdata.energytoday);
+  }
+  else if(server.hasArg("growatt_energytotal"))
+  {
+    value = String(modbusdata.energytotal);
+  }
+  else if(server.hasArg("growatt_totalworktime"))
+  {
+    value = String(modbusdata.totalworktime/3600.0);
+  }
+  else if(server.hasArg("growatt_tempinverter"))
+  {
+    value = String(modbusdata.tempinverter);
   }
   else if(server.hasArg("wifiRSSI"))
   {
